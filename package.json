@@ -5,7 +5,7 @@
   "main": "./dist/commonjs/app.js",
   "scripts": {
     "start": "node ./dist/commonjs/app.js",
-    "test": "test",
+    "test": "echo 'write some tests!'",
     "build": "tsc",
     "style": "eslint 'src/**/*.ts' 'test/**/*.ts' --max-warnings=0",
     "style-fix": "eslint --fix 'src/**/*.ts' 'test/**/*.ts'"
