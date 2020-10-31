@@ -1,0 +1,13 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: nodejs-template-ingress
+  namespace: sorc3r3r-nodejs-template-staging
+spec:
+  rules:
+    - host: nodejs.template.sorc3r3r.io
+      http:
+        paths:
+          - backend:
+              serviceName: nodejs-template-service
+              servicePort: 80
