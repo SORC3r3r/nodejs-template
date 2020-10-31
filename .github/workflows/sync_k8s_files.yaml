@@ -1,0 +1,54 @@
+name: Sync k8s files
+
+### ----------------------------------------------------- ###
+### CONFIGURATION INSTRUCTIONS: See comments in workflow! ###
+### ----------------------------------------------------- ###
+
+on:
+  workflow_run:          # Run this workflow depending on another workflow run
+    workflows: ["Build"] # Set the name of the workflow which will trigger this workflow
+    branches: 'master'   # Set the branch for which this workflow should run
+    types:
+      - completed        # Start this workflow after the configured workflow is completed
+
+jobs:
+  build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} # Only build this job if the workflow which triggered this one was successful
+    name: sync k8s files to gitops repository 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set environment variables
+        ### Update following lines according to the repository 
+        ### Update repository name: repo=<REPOSITORY_NAME>
+        ### Update conatiner name: image_name=docker.pkg.github.com/${{ github.repository }}/<CONTAINER_NAME>)
+        run: |
+          echo "repo=nodejs-template"  >> $GITHUB_ENV                                                        # Name of your repository
+          echo "image_name=docker.pkg.github.com/${{ github.repository }}/nodejs-template" >> $GITHUB_ENV    # Name of the Docker image, needed for kustomization
+          echo "new_branch_name=deploy/${{ github.repository }}-${{ github.sha }}" >> $GITHUB_ENV   # Branch on which the changes will be pushed to gitops repository
+          echo "k8s_file_path=${{ github.repository }}/k8s" >> $GITHUB_ENV                          # Path of the k8s files in your gitops repository
+      - name: Set github variables
+        run: |
+          git config --global user.email "sorc3r3r@jvr.com"
+          git config --global user.name "sorc3r3r"
+      - uses: actions/checkout@v2
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v2
+        with:
+          repository: sorc3r3r/gitops
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: gitops_repository
+      - name: Set kustomize image tag
+        working-directory: k8s/base
+        run: |
+          kustomize edit set image \
+          $image_name=:${{ github.sha }}
+          kustomize build . -o ./manifest.yml
+      - name: Sync k8s files to GitOps repository 
+        working-directory: gitops_repository 
+        run: |
+          git checkout -b $new_branch_name
+          mkdir -p $k8s_file_path
+          cp -rf ../k8s/* $k8s_file_path
+          git add $k8s_file_path
+          git commit -am "new deployment for ${{ github.repository }}"
+          git push --set-upstream origin $new_branch_name
