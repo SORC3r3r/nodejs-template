@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  my-awesome-nodejs-app:
+    build:
+      context: .
+      args:
+        - NPM_TOKEN
+    image: docker.pkg.github.com/sorc3r3r/nodejs-template/nodejs-template:${IMAGE_TAG:-latest}
+    ports:
+      - 1337:1337
+    environment:
+      - APP_HOST='http://localhost'
+      - APP_POST='1337'

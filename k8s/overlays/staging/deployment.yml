@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodejs-template
+  namespace: sorc3r3r-nodejs-template-staging
+spec:
+  template:
+    spec:
+      containers:
+        - name: nodejs-template

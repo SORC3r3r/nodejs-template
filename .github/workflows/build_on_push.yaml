@@ -1,0 +1,31 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
+jobs:
+  build:
+
+    name: Build and Test
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: docker-compose build --pull
+      - name: Run tests
+        run: docker-compose run my-awesome-nodejs-app npm run test
+
+      # Only publish if on branch master
+      - name: Login to Docker Registry
+        if: github.ref == 'refs/heads/master'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      - name: Publish to Docker Registry
+        if: github.ref == 'refs/heads/master'
+        run: docker-compose push
